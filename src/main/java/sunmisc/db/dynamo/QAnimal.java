@@ -11,13 +11,13 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-public class QAnimal implements Animal {
-    private static final String SELECT_TYPE =
+public final class QAnimal implements Animal {
+    private static final String SELECT_BY_TYPE =
             "SELECT type FROM animals WHERE id = ?";
-    private static final String UPDATE_DEATH_DATE = """
-             UPDATE animals SET date_of_death = ?
-             WHERE id = ? AND date_of_death IS NULL
-             """;
+    private static final String INSERT_DEAD_ANIMAL = """
+            INSERT INTO dead_animals (animal_id, date_of_death)
+            VALUES (?,?)
+            """;
 
     private final long id;
     private final Connection connection;
@@ -39,7 +39,7 @@ public class QAnimal implements Animal {
 
     @Override
     public String type() throws SQLException {
-        try (var ps = connection.prepareStatement(SELECT_TYPE)) {
+        try (var ps = connection.prepareStatement(SELECT_BY_TYPE)) {
 
             ps.setLong(1, id);
 
@@ -53,9 +53,9 @@ public class QAnimal implements Animal {
 
     @Override
     public void die() throws Exception {
-        try (var ps = connection.prepareStatement(UPDATE_DEATH_DATE)) {
-            ps.setDate(1, Date.valueOf(LocalDate.now()));
-            ps.setLong(2, id());
+        try (var ps = connection.prepareStatement(INSERT_DEAD_ANIMAL)) {
+            ps.setLong(1, id());
+            ps.setDate(2, Date.valueOf(LocalDate.now()));
             if (ps.executeUpdate() == 0) {
                 throw new RuntimeException(
                         "failed to die the animal, it may have already been died");
@@ -68,9 +68,11 @@ public class QAnimal implements Animal {
             Animal animal, Connection connection
     ) implements Live {
         private static final String SELECT_DATE_OF_BIRTH_BY_ID =
-                "SELECT date_of_birth FROM animals WHERE id = ?";
-        private static final String SELECT_DATE_OF_DEATH_BY_ID =
-                "SELECT date_of_death FROM animals WHERE id = ?";
+                "SELECT date_of_birth FROM animals WHERE id = ? LIMIT 1";
+        private static final String SELECT_DATE_OF_DEATH_BY_ID = """
+                SELECT date_of_death FROM dead_animals WHERE animal_id = ?
+                LIMIT 1
+                """;
 
         @Override
         public LocalDateTime dateOfBirth() {

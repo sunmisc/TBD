@@ -13,9 +13,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-public class QPets implements Pets {
+public final class QPets implements Pets {
     private static final String SELECT_PETS =
-            "SELECT name FROM pets WHERE owner_id = ?";
+            "SELECT pet_id FROM pets WHERE owner_id = ?";
     private static final String INSERT_PET = """
             INSERT INTO pets (pet_id, owner_id, name)
             VALUES (?,?,?)
@@ -35,15 +35,16 @@ public class QPets implements Pets {
         // transaction block
         connection.setAutoCommit(false);
         try (var ps = connection.prepareStatement(INSERT_PET)) {
-            ps.setLong(1, animal.id());
+            long pet_id = animal.id();
+            ps.setLong(1, pet_id);
             ps.setLong(2, owner.id());
-            ps.setString(3,name);
+            ps.setString(3, name);
 
             ps.execute();
 
             new QCollars(connection)
                     .add(
-                            new QPet(name, connection, owner),
+                            new QPet(pet_id, connection),
                             "empty");
             connection.commit();
         } catch (SQLException e) {
@@ -62,8 +63,8 @@ public class QPets implements Pets {
 
             try (ResultSet result = ps.executeQuery()) {
                 while (result.next()) {
-                    String pet_name = result.getString(1);
-                    pets.add(new QPet(pet_name, connection, owner));
+                    long pet_id = result.getLong(1);
+                    pets.add(new QPet(pet_id, connection));
                 }
             }
             return pets.stream();

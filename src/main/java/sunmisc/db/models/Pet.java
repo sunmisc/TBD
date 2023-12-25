@@ -2,9 +2,9 @@ package sunmisc.db.models;
 
 public interface Pet extends Animal {
 
-    String name();
+    String name() throws Exception;
 
-    Collar collar();
+    Collar collar() throws Exception;
 
-    Owner owner();
+    Owner owner() throws Exception;
 }

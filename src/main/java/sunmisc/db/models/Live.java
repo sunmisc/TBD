@@ -10,6 +10,7 @@ public interface Live {
 
     Optional<LocalDateTime> dateOfDeath();
 
+
     default boolean alive() {
         return dateOfDeath().isEmpty();
     }

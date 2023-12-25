@@ -6,7 +6,7 @@ import sunmisc.db.models.Pet;
 import java.sql.Connection;
 import java.util.Objects;
 
-public class QCollars implements Collars {
+public final class QCollars implements Collars {
 
     private static final String INSERT_COLLAR = """
             INSERT INTO collars (pet_id, description)

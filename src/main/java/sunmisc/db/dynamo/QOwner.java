@@ -7,54 +7,68 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class QOwner implements Owner {
+public final class QOwner implements Owner {
+    private static final String SELECT_IDENTIFICATION =
+            "SELECT phone FROM owners WHERE id = ? LIMIT 1";
     private static final String SELECT_PHONE_NUMBER =
-            "SELECT phone FROM owners WHERE first_name = ? AND last_name = ?";
-    private static final String SELECT_ID_BY_NAME =
-            "SELECT id FROM owners WHERE first_name = ? AND last_name = ?";
-
-    private final Identification origin;
+            "SELECT id FROM owners WHERE id = ? LIMIT 1";
+    private static final String UPDATE_PHONE_NUMBER =
+            "UPDATE owners SET phone = ? WHERE id = ?";
+    private final long id;
 
     private final Connection connection;
 
-    public QOwner(Identification origin, Connection connection) {
-        this.origin = origin;
+
+    public QOwner(long id, Connection connection) {
+        this.id = id;
         this.connection = connection;
     }
 
-    @Override
-    public Identification identification() {
-        return origin;
-    }
 
     @Override
     public long id() throws SQLException {
-        try (var ps = connection.prepareStatement(SELECT_ID_BY_NAME)) {
+        return id;
+    }
 
-            ps.setString(1, origin.firstName());
-            ps.setString(2, origin.lastName());
+    @Override
+    public Identification identification() throws Exception {
+        try (var ps = connection.prepareStatement(SELECT_IDENTIFICATION)) {
+
+            ps.setLong(1, id());
 
             try (ResultSet result = ps.executeQuery()) {
-                if (result.next())
-                    return result.getLong(1);
-                throw new IllegalStateException("id is empty");
+                if (result.next()) {
+                    String first = result.getString(1);
+                    String last = result.getString(2);
+
+                    return new Identification(first, last);
+                }
+                throw new IllegalStateException("identification is empty");
             }
         }
     }
-
 
     @Override
     public String phone() throws SQLException  {
         try (var ps = connection.prepareStatement(SELECT_PHONE_NUMBER)) {
 
-            ps.setString(1, origin.firstName());
-            ps.setString(2, origin.lastName());
+            ps.setLong(1, id());
 
             try (ResultSet result = ps.executeQuery()) {
                 if (result.next())
                     return result.getString(1);
                 throw new IllegalStateException("phone is empty");
             }
+        }
+    }
+
+    @Override
+    public void updatePhone(String newPhoneNumber) throws SQLException {
+        try (var ps = connection.prepareStatement(UPDATE_PHONE_NUMBER)) {
+            ps.setString(1, newPhoneNumber);
+            ps.setLong(2, id());
+
+            ps.execute();
         }
     }
 

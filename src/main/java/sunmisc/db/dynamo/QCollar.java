@@ -7,9 +7,9 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.Objects;
 
-public class QCollar implements Collar {
+public final class QCollar implements Collar {
     private static final String SELECT_DESCRIPTION_BY_ID =
-            "SELECT description FROM collars WHERE pet_id = ?";
+            "SELECT description FROM collars WHERE pet_id = ? LIMIT 1";
     private static final String UPDATE_DESCRIPTION =
             "UPDATE collars SET description = ? WHERE pet_id = ?";
     private static final String DELETE =

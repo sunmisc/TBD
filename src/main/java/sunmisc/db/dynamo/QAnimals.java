@@ -12,7 +12,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Stream;
 
-public class QAnimals implements Animals {
+public final class QAnimals implements Animals {
 
     private final Connection connection;
 

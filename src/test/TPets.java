@@ -17,7 +17,8 @@ public class TPets {
     public void add() throws Exception {
         PooledDatabase db = new PooledDatabase();
         try (Connection connection = db.connection()) {
-            new QOwner(TOwners.IDENTIFIER, connection).add(
+
+            new QOwner(1, connection).add(
                     new QAnimal(connection, 1),
                     "Чоп");
         }
@@ -26,7 +27,7 @@ public class TPets {
     public void findOwner() throws Exception {
         PooledDatabase db = new PooledDatabase();
         try (Connection connection = db.connection()) {
-            Owner owner = new QOwner(TOwners.IDENTIFIER, connection);
+            Owner owner = new QOwner(1, connection);
 
             Pets pets = new QPets(connection);
 

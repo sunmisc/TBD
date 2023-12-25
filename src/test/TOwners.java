@@ -32,7 +32,9 @@ public class TOwners {
         try (Connection connection = db.connection()) {
             Owners owners = new QOwners(connection);
 
-            Owner owner = owners.owner(IDENTIFIER);
+            Owner owner = owners.owners(TOwners.IDENTIFIER)
+                    .findAny()
+                    .orElseThrow();
             assertEquals(owner.identification(), IDENTIFIER);
             assertEquals(owner.phone(), PHONE);
         }

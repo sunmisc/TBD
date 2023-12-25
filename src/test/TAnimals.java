@@ -3,6 +3,7 @@ import sunmisc.db.PooledDatabase;
 import sunmisc.db.dynamo.QAnimals;
 
 import java.sql.Connection;
+
 import static org.testng.Assert.assertTrue;
 
 public class TAnimals {

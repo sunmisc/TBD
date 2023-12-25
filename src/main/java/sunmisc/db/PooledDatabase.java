@@ -22,6 +22,7 @@ public class PooledDatabase {
     public Connection connection() throws SQLException {
         MariaDbDataSource ds = new MariaDbDataSource();
 
+        ds.setPort(3306);
         ds.setUser(username);
         ds.setPassword(password);
         ds.setDatabaseName(dbName);

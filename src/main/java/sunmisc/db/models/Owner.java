@@ -10,7 +10,5 @@ public interface Owner {
 
     void updatePhone(String newPhoneNumber) throws Exception;
 
-    void add(Animal animal, String name) throws Exception;
-
     record Identification(String firstName, String lastName) { }
 }

@@ -1,5 +1,6 @@
 package sunmisc.db.dynamo;
 
+import sunmisc.db.agents.Pets;
 import sunmisc.db.models.Collar;
 import sunmisc.db.models.Pet;
 
@@ -17,6 +18,7 @@ public final class QCollar implements Collar {
 
     private final Connection connection;
     private final Pet pet;
+
 
     public QCollar(Pet pet, Connection connection) {
         this.pet = pet;

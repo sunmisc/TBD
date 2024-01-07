@@ -1,6 +1,5 @@
 package sunmisc.db.dynamo;
 
-import sunmisc.db.models.Animal;
 import sunmisc.db.models.Owner;
 
 import java.sql.Connection;
@@ -70,10 +69,5 @@ public final class QOwner implements Owner {
 
             ps.execute();
         }
-    }
-
-    @Override
-    public void add(Animal animal, String name) throws Exception {
-        new QPets(connection).add(this, animal, name);
     }
 }

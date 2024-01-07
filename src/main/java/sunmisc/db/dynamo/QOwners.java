@@ -10,6 +10,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 public final class QOwners implements Owners {
@@ -27,8 +28,15 @@ public final class QOwners implements Owners {
             """;
     private final Connection connection;
 
+    private final Function<Long, Owner> mapping;
+
     public QOwners(Connection connection) {
+        this(connection, id -> new QOwner(id, connection));
+    }
+
+    public QOwners(Connection connection, Function<Long, Owner> mapping) {
         this.connection = connection;
+        this.mapping = mapping;
     }
 
 
@@ -56,7 +64,7 @@ public final class QOwners implements Owners {
             try (ResultSet result = ps.executeQuery()) {
                 while (result.next()) {
                     long id = result.getLong(1);
-                    owners.add(new QOwner(id, connection));
+                    owners.add(owner(id));
                 }
             }
         } catch (SQLException e) {
@@ -74,7 +82,7 @@ public final class QOwners implements Owners {
                 if (result.next()) {
                     long id = result.getLong(1);
 
-                    return Optional.of(new QOwner(id, connection));
+                    return Optional.of(owner(id));
                 }
 
             }
@@ -82,6 +90,11 @@ public final class QOwners implements Owners {
             throw new RuntimeException(e);
         }
         return Optional.empty();
+    }
+
+    @Override
+    public Owner owner(long id) {
+        return mapping.apply(id);
     }
 
 }

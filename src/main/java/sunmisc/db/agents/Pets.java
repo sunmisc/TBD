@@ -8,6 +8,8 @@ import java.util.stream.Stream;
 
 public interface Pets {
 
+    Pet pet(long id);
+
     void add(Owner owner,
              Animal animal,
              String name

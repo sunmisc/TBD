@@ -1,5 +1,9 @@
 package sunmisc.db.dynamo;
 
+import sunmisc.db.Transaction;
+import sunmisc.db.agents.Animals;
+import sunmisc.db.agents.Collars;
+import sunmisc.db.agents.Owners;
 import sunmisc.db.models.Collar;
 import sunmisc.db.models.Live;
 import sunmisc.db.models.Owner;
@@ -7,7 +11,6 @@ import sunmisc.db.models.Pet;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 
 public final class QPet implements Pet {
     private static final String SELECT_NAME_BY_PET_ID = """
@@ -21,11 +24,34 @@ public final class QPet implements Pet {
     private final long petId;
     private final Connection connection;
 
+    private final Owners owners;
+    private final Collars collars;
+    private final Animals animals;
+
 
     public QPet(long petId, Connection connection) {
+
+        this(petId, connection,
+                new QOwners(connection),
+                new QCollars(connection),
+                new QAnimals(connection));
+    }
+
+    public QPet(long petId, Connection connection,
+                Owners owners,
+                Collars collars,
+                Animals animals) {
         this.petId = petId;
         this.connection = connection;
+        this.owners = owners;
+        this.collars = collars;
+        this.animals = animals;
     }
+    @Override
+    public long id() throws Exception {
+        return petId;
+    }
+
     @Override
     public Owner owner() throws Exception {
         try (var ps = connection.prepareStatement(SELECT_OWNER_BY_PET_ID)) {
@@ -34,7 +60,7 @@ public final class QPet implements Pet {
             try (ResultSet result = ps.executeQuery()) {
                 if (result.next()) {
                     long owner_id = result.getLong(1);
-                    return new QOwner(owner_id, connection);
+                    return owners.owner(owner_id);
                 }
                 throw new IllegalStateException("owner is empty");
             }
@@ -56,40 +82,32 @@ public final class QPet implements Pet {
 
     @Override
     public Live live() throws Exception {
-        return new QAnimal(connection, id()).live();
+        return animals.animal(id()).live();
     }
 
     @Override
     public Collar collar() {
-        return new QCollar(this, connection);
+        return collars.collar(this);
     }
 
-
-    @Override
-    public long id() throws Exception {
-        return petId;
-    }
 
     @Override
     public String type() throws Exception {
-        return new QAnimal(connection, id()).type();
+        return animals.animal(id()).type();
     }
 
     @Override
-    public void die() throws Exception {
-        Connection conn = connection;
+    public void die() {
 
-        // transaction block
-        conn.setAutoCommit(false);
+        new Transaction(() -> {
 
-        try {
-            new QAnimal(connection, id()).die();
-            new QCollar(this, connection).invalidate();
-            conn.commit();
-        } catch (SQLException e) {
-            conn.rollback();
-            throw new RuntimeException(e);
-        }
+            try {
+                animals.animal(id()).die();
+                collar().invalidate();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }, connection).run();
     }
 
 }

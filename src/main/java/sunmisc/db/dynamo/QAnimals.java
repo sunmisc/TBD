@@ -10,6 +10,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 public final class QAnimals implements Animals {
@@ -23,8 +24,17 @@ public final class QAnimals implements Animals {
     private static final String SELECT_ANIMAL_BY_TYPE =
             "SELECT id FROM animals WHERE type = ?";
 
+    private final Function<Long, Animal> mapping;
+
+
     public QAnimals(Connection connection) {
+        this(connection, id -> new QAnimal(connection, id));
+    }
+
+
+    public QAnimals(Connection connection, Function<Long, Animal> mapping) {
         this.connection = connection;
+        this.mapping = mapping;
     }
 
 
@@ -46,12 +56,17 @@ public final class QAnimals implements Animals {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     long id = rs.getLong(1);
-                    list.add(new QAnimal(connection, id));
+                    list.add(mapping.apply(id));
                 }
             }
             return list.stream();
         } catch (SQLException e) {
             return Stream.empty();
         }
+    }
+
+    @Override
+    public Animal animal(long id) {
+        return mapping.apply(id);
     }
 }

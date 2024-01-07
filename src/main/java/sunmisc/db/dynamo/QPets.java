@@ -1,5 +1,9 @@
 package sunmisc.db.dynamo;
 
+import sunmisc.db.Transaction;
+import sunmisc.db.agents.Animals;
+import sunmisc.db.agents.Collars;
+import sunmisc.db.agents.Owners;
 import sunmisc.db.agents.Pets;
 import sunmisc.db.models.Animal;
 import sunmisc.db.models.Owner;
@@ -11,6 +15,7 @@ import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 public final class QPets implements Pets {
@@ -21,9 +26,30 @@ public final class QPets implements Pets {
             VALUES (?,?,?)
             """;
     private final Connection connection;
+    private final Collars collars;
+    private final Function<Long, Pet> mapping;
 
     public QPets(Connection connection) {
+        this(connection,
+                new QOwners(connection),
+                new QAnimals(connection),
+                new QCollars(connection));
+    }
+
+    public QPets(Connection connection,
+                 Owners owners,
+                 Animals animals,
+                 Collars collars) {
+        this(connection, collars,
+                id -> new QPet(id, connection, owners, collars, animals));
+    }
+
+    public QPets(Connection connection,
+                 Collars collars,
+                 Function<Long, Pet> mapping) {
         this.connection = connection;
+        this.collars = collars;
+        this.mapping = mapping;
     }
 
 
@@ -32,25 +58,20 @@ public final class QPets implements Pets {
         Objects.requireNonNull(owner);
         Objects.requireNonNull(animal);
 
-        // transaction block
-        connection.setAutoCommit(false);
-        try (var ps = connection.prepareStatement(INSERT_PET)) {
-            long pet_id = animal.id();
-            ps.setLong(1, pet_id);
-            ps.setLong(2, owner.id());
-            ps.setString(3, name);
+        new Transaction(() -> {
+            try (var ps = connection.prepareStatement(INSERT_PET)) {
+                long pet_id = animal.id();
+                ps.setLong(1, pet_id);
+                ps.setLong(2, owner.id());
+                ps.setString(3, name);
 
-            ps.execute();
+                ps.execute();
 
-            new QCollars(connection)
-                    .add(
-                            new QPet(pet_id, connection),
-                            "empty");
-            connection.commit();
-        } catch (SQLException e) {
-            connection.rollback();
-            throw new RuntimeException(e);
-        }
+                collars.add(pet(pet_id), "empty");
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }, connection).run();
     }
 
     @Override
@@ -64,12 +85,17 @@ public final class QPets implements Pets {
             try (ResultSet result = ps.executeQuery()) {
                 while (result.next()) {
                     long pet_id = result.getLong(1);
-                    pets.add(new QPet(pet_id, connection));
+                    pets.add(pet(pet_id));
                 }
             }
             return pets.stream();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public Pet pet(long id) {
+        return mapping.apply(id);
     }
 }

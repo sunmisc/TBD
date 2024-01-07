@@ -1,6 +1,5 @@
 package sunmisc.db;
 
-
 import sunmisc.db.agents.Animals;
 import sunmisc.db.agents.Owners;
 import sunmisc.db.agents.Pets;

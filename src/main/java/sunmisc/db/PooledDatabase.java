@@ -2,10 +2,8 @@ package sunmisc.db;
 
 import org.mariadb.jdbc.MariaDbDataSource;
 
-import javax.xml.crypto.Data;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.function.Supplier;
 
 @SuppressWarnings("forRemoval")
 public class PooledDatabase {

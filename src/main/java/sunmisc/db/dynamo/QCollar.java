@@ -1,6 +1,5 @@
 package sunmisc.db.dynamo;
 
-import sunmisc.db.agents.Pets;
 import sunmisc.db.models.Collar;
 import sunmisc.db.models.Pet;
 
